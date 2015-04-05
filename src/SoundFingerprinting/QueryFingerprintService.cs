@@ -146,6 +146,7 @@
         private Dictionary<IModelReference, ISet<SubFingerprintData>> GetAllCandidates(IModelService modelService, IEnumerable<HashedFingerprint> hashedFingerprints, QueryConfiguration queryConfiguration)
         {
             var allCandidates = new Dictionary<IModelReference, ISet<SubFingerprintData>>();
+            var possibleStartingCorrespondence = new Dictionary<IModelReference, IDictionary<int, ISet<SubFingerprintData>>>();
             foreach (var hashedFingerprint in hashedFingerprints)
             {
                 var subFingerprints = GetSubFingerprints(modelService, hashedFingerprint, queryConfiguration);
@@ -159,6 +160,23 @@
                     }
 
                     allCandidates[subFingerprint.TrackReference].Add(subFingerprint);
+
+                    if (!possibleStartingCorrespondence.ContainsKey(subFingerprint.TrackReference))
+                    {
+                        possibleStartingCorrespondence.Add(subFingerprint.TrackReference, new Dictionary<int, ISet<SubFingerprintData>>());
+                    }
+
+                    if (
+                        !possibleStartingCorrespondence[subFingerprint.TrackReference].ContainsKey(
+                            hashedFingerprint.SequenceNumber))
+                    {
+                        possibleStartingCorrespondence[subFingerprint.TrackReference].Add(
+                            hashedFingerprint.SequenceNumber,
+                            new SortedSet<SubFingerprintData>(new SubFingerprintSequenceComparer()));
+                    }
+
+                    possibleStartingCorrespondence[subFingerprint.TrackReference][hashedFingerprint.SequenceNumber].Add(
+                        subFingerprint);
                 }
             }
 
